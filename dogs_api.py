@@ -25,25 +25,28 @@ with open("stzh.adm_stadtkreise_a.json") as f:
     geojson = json.load(f)
 
 # convert Stadtkreis to str as geojson contains strings
-df['STADTKREIS'] = df['STADTKREIS'].astype(str)
+df['STADTKREIS'] = df['STADTKREIS'].astype(str).str.strip()
 
+# Merge counts into GeoJSON
+for feature in geojson["features"]:
+    feature['properties']['name'] = feature['properties']['name'].strip()
 
 # Figure 1. Breed popularity
 #st.subheader('Breed popularity')
 #st.write('A bar chart with with counts of dogs by breed - top 20')
 
 rasse_df = df.groupby('RASSE1')['RASSE1'].agg('count').reset_index(name= "count")
-rasse_df = rasse_df.sort_values(by="count", ascending=False).head(20)
+rasse_df = rasse_df.sort_values(by="count", ascending=True).tail(20)
 
 highlight_values = ["Mischling klein", "Mischling gross"]
 
-rasse_df["Breed category"] = rasse_df["RASSE1"].apply(
+rasse_df["Breed_category"] = rasse_df["RASSE1"].apply(
     lambda x: "Mixed breeds" if x in highlight_values else "Other breeds"
 )
 fig1 = px.bar(rasse_df, 
-             x = rasse_df['RASSE1'], 
-             y = rasse_df['count'],
-             color = 'Breed category',
+             x = 'RASSE1', 
+             y = 'count',
+             color = 'Breed_category',
             labels={
         "RASSE1": "Dog Breed",   
         "count": "Dog count"   
@@ -54,7 +57,7 @@ fig1 = px.bar(rasse_df,
     }
             )
 fig1.update_layout(
-    title = 'Top 20 Dog Breeds in Zurich',
+    title = 'Top Dog Breeds in Zurich',
     xaxis_tickangle = 45
 )
 #st.plotly_chart(fig1)
@@ -66,12 +69,6 @@ fig1.update_layout(
 
 # total counts of dogs per neighbourhood
 df_counts = df.groupby("STADTKREIS").size().reset_index(name="dog_count")
-# Merge counts into GeoJSON
-for feature in geojson["features"]:
-    name = feature["properties"]["name"]
-    counts = df_counts[df_counts["STADTKREIS"] == name]["dog_count"]
-    feature["properties"]["dog_count"] = int(counts.tolist()[0]) if len(counts) > 0 else 0
-
 
 # Create map with neighbourhoods coloured 
 # from clear to dark by total number of dogs
@@ -92,6 +89,8 @@ fig2 = px.choropleth_map(
     height = 800,
     title= 'Count of dogs by neighbourhood'
 )
+
+fig2.update_geos(fitbounds="locations", visible=False)
 
 #st.plotly_chart(fig2)
 
