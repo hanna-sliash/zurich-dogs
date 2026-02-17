@@ -69,8 +69,9 @@ df_counts = df.groupby("STADTKREIS").size().reset_index(name="dog_count")
 # Merge counts into GeoJSON
 for feature in geojson["features"]:
     name = feature["properties"]["name"]
-    count = df_counts.loc[df_counts["STADTKREIS"] == name, "dog_count"].values
-    feature["properties"]["dog_count"] = int(count[0]) if len(count) > 0 else 0
+    counts = df_counts[df_counts["STADTKREIS"] == name]["dog_count"]
+    feature["properties"]["dog_count"] = int(counts.tolist()[0]) if len(counts) > 0 else 0
+
 
 # Create map with neighbourhoods coloured 
 # from clear to dark by total number of dogs
