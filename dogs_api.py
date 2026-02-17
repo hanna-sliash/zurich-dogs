@@ -104,7 +104,7 @@ df_colors_breeds = df.groupby(["RASSE1", "HUNDEFARBE"])['RASSE1'].count().reset_
 
 # isolating top 30 breeds
 df_plot = df_colors_breeds[
-    df_colors_breeds["RASSE1"].isin(top30)
+    df_colors_breeds["RASSE1"].isin(top30).copy()
 ]
 
 #top colors
